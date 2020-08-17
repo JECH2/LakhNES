@@ -1,0 +1,19 @@
+python train.py \
+	--cuda \
+	--data ../data/nesmdb_tx1 \
+	--dataset nesmdb \
+	--work_dir ../results/ \
+	--n_head 8 \
+	--d_head 64 \
+	--d_embed 512 \
+	--d_model 512 \
+	--d_inner 2048 \
+	--dropout 0.1 \
+	--lr 2.5e-05 \
+	--max_step 400000 \
+	--batch_size 10 \
+	--tgt_len 512 \
+	--eval_tgt_len 128 \
+	--mem_len 512 \
+	--multi_gpu \
+	--gpu0_bsz 4

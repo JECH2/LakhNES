@@ -1,3 +1,5 @@
+# code base from transformer-XL : https://github.com/kimiyoung/transformer-xl/blob/master/pytorch/train.py
+
 # coding: utf-8
 import argparse
 import time
@@ -96,7 +98,7 @@ parser.add_argument('--ext_len', type=int, default=0,
 parser.add_argument('--mem_len', type=int, default=0,
                     help='length of the retained previous heads')
 parser.add_argument('--not_tied', action='store_true',
-                    help='do not tie the word embedding and softmax weights')
+                    help='do not tie the word embedding and softmax weights : not fix them')
 parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--cuda', action='store_true',
@@ -155,6 +157,7 @@ parser.add_argument('--dynamic-loss-scale', action='store_true',
 args = parser.parse_args()
 args.tied = not args.not_tied
 
+# what is this?
 if args.d_embed < 0:
     args.d_embed = args.d_model
 
@@ -188,6 +191,7 @@ if args.fp16:
             args.fp16 = False
 
 device = torch.device('cuda' if args.cuda else 'cpu')
+print(device)
 
 ###############################################################################
 # Load data
@@ -272,10 +276,12 @@ def update_dropout(m):
         if hasattr(m, 'p'):
             m.p = args.dropout
 
+# attention part dropout
 def update_dropatt(m):
     if hasattr(m, 'dropatt'):
         m.dropatt.p = args.dropatt
 
+# training using checkpoint
 if args.restart:
     with open(os.path.join(args.restart_dir, 'model.pt'), 'rb') as f:
         model = torch.load(f)
@@ -383,6 +389,7 @@ if args.restart:
     else:
         print('Optimizer was not saved. Start from scratch.')
 
+# args information logging!
 logging('=' * 100)
 for k, v in args.__dict__.items():
     logging('    - {} : {}'.format(k, v))
