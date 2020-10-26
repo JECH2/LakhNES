@@ -4,6 +4,7 @@ import glob
 from collections import Counter, OrderedDict
 import numpy as np
 import torch
+from tqdm import tqdm
 
 from utils.vocabulary import Vocab
 
@@ -117,6 +118,7 @@ class LMShuffledIterator(object):
                             streams[i][1:n_new+1]
                         streams[i] = streams[i][n_new:]
                         n_filled += n_new
+                # StopIteration when next(sent_stream) is None : not fully filled batch & last stream == not valid batch, so we don't feed it
                 except StopIteration:
                     valid_batch = False
                     break
@@ -126,7 +128,6 @@ class LMShuffledIterator(object):
 
             data = data.to(self.device)
             target = target.to(self.device)
-
             yield data, target, self.bptt
 
             n_retain = min(data.size(0), self.ext_len)
@@ -137,7 +138,6 @@ class LMShuffledIterator(object):
     def __iter__(self):
         # sent_stream is an iterator
         sent_stream = self.get_sent_stream()
-
         for batch in self.stream_iterator(sent_stream):
             yield batch
 
@@ -184,14 +184,14 @@ class LMMultiFileIterator(LMShuffledIterator):
             np.random.shuffle(self.paths)
 
         sents = []
-        for path in self.paths:
-            sents.extend(self.vocab.encode_file(path, add_double_eos=True,
+        for i in tqdm(range(len(self.paths)), desc="get training data"):
+            sents.extend(self.vocab.encode_file(self.paths[i], add_double_eos=True,
               augment_transpose=self.augment_transpose,
               augment_stretch=self.augment_stretch,
               augment_switchp1p2=self.augment_switchp1p2,
               augment_selectens=self.augment_selectens,
               trim_padding=self.trim_padding))
-
+              
         if self.skip_short:
           sents = [s for s in sents if len(s) >= 10]
 

@@ -1,6 +1,6 @@
 python train.py \
 	--cuda \
-	--data ../data/lakh_tx1 \
+	--data ../data/nesmdb_tx1 \
 	--dataset nesmdb \
 	--work_dir ../results/ \
 	--n_head 8 \
@@ -19,6 +19,9 @@ python train.py \
 	--gpu0_bsz 4 \
 	--augment_transpose \
 	--augment_stretch \
+	--augment_switchp1p2 \
+    --augment_selectens \
 	--skip_short \
 	--trim_padding \
-	--no_testset
+	--restart \
+    --restart_dir ../results/-nesmdb/20200917-031518

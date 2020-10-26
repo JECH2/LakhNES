@@ -1,16 +1,27 @@
 from collections import defaultdict
 import tempfile
+import pretty_midi
+import glob
+import shutil
+import multiprocessing
+import os
 
-def midi_to_tx1(midi):
-  import pretty_midi
+import numpy as np
+from tqdm import tqdm
+
+
+# input : midi file (.mid) name
+def midi_to_tx1(midi_fp, output_dir, save_file=True):
   pretty_midi.pretty_midi.MAX_TICK = 1e16
 
-  # Load MIDI file
-  with tempfile.NamedTemporaryFile('wb') as mf:
-    mf.write(midi)
-    mf.seek(0)
-    midi = pretty_midi.PrettyMIDI(mf.name)
-
+#  # Load MIDI file
+#  with tempfile.NamedTemporaryFile('wb') as mf:
+#    mf.write(midi)
+#    mf.seek(0)
+#    midi = pretty_midi.PrettyMIDI(mf.name)
+  midi = pretty_midi.PrettyMIDI(midi_fp)
+  
+  # p1 p2 tr no sorting order
   ins_names = ['p1', 'p2', 'tr', 'no']
   instruments = sorted(midi.instruments, key=lambda x: ins_names.index(x.name))
   samp_to_events = defaultdict(list)
@@ -21,6 +32,7 @@ def midi_to_tx1(midi):
     last_end = -1
     last_pitch = -1
     for note in ins.notes:
+      # I'm not sure why we add this
       start = (note.start * 44100) + 1e-6
       end = (note.end * 44100) + 1e-6
 
@@ -61,6 +73,12 @@ def midi_to_tx1(midi):
     tx1.append('WT_{}'.format(nsamps - last_samp))
 
   tx1 = '\n'.join(tx1)
+
+  if save_file:
+    outfile = output_dir + '/' + os.path.basename(midi_fp)[:-4] + '.txt'
+    with open(outfile, "w") as f:
+      f.write(tx1)
+
   return tx1
 
 
@@ -132,3 +150,17 @@ def tx1_to_midi(tx1):
     midi = mf.read()
 
   return midi
+
+if __name__ == '__main__':
+  midi_fps = glob.glob('out/*.mid*')
+  out_dir = './lakh_txt'
+
+  if os.path.isdir(out_dir):
+    shutil.rmtree(out_dir)
+  os.makedirs(out_dir)
+
+  def _task(x):
+    midi_to_tx1(x, out_dir)
+
+  with multiprocessing.Pool(8) as p:
+    r = list(tqdm(p.imap(_task, midi_fps), total=len(midi_fps)))

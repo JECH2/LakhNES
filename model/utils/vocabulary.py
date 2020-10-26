@@ -68,7 +68,6 @@ class Vocab(object):
         self.idx2sym = []
         self.sym2idx = OrderedDict()
         self.wait_amts = set()
-
         with open(vocab_file, 'r', encoding='utf-8') as f:
             self.add_symbol('<S>')
             for line in f:
@@ -157,7 +156,7 @@ class Vocab(object):
             encoded.append(self.convert_to_tensor(symbols))
 
         if ordered:
-            encoded = torch.cat(encoded)
+            encoded = torch.cat(encoded) # 텐서를 결합
 
         return encoded
 

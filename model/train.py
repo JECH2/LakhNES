@@ -154,6 +154,8 @@ parser.add_argument('--static-loss-scale', type=float, default=1,
 parser.add_argument('--dynamic-loss-scale', action='store_true',
                     help='Use dynamic loss scaling.  If supplied, this argument'
                     ' supersedes --static-loss-scale.')
+parser.add_argument('--no_testset', action='store_true',
+                    help='not use testset : for lakh dataset')
 args = parser.parse_args()
 args.tied = not args.not_tied
 
@@ -205,7 +207,11 @@ tr_iter = corpus.get_iterator('train', args.batch_size, args.tgt_len,
     device=device, ext_len=args.ext_len, augment_transpose=args.augment_transpose, augment_stretch=args.augment_stretch, augment_switchp1p2=args.augment_switchp1p2, augment_selectens=args.augment_selectens, skip_short=args.skip_short, trim_padding=args.trim_padding)
 va_iter = corpus.get_iterator('valid', eval_batch_size, args.eval_tgt_len,
     device=device, ext_len=args.ext_len)
-te_iter = corpus.get_iterator('test', eval_batch_size, args.eval_tgt_len,
+if args.no_testset:
+    te_iter = corpus.get_iterator('valid', eval_batch_size, args.eval_tgt_len,
+    device=device, ext_len=args.ext_len)
+else : 
+    te_iter = corpus.get_iterator('test', eval_batch_size, args.eval_tgt_len,
     device=device, ext_len=args.ext_len)
 
 # adaptive softmax / embedding

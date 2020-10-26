@@ -29,12 +29,12 @@ def instrument_is_monophonic(ins):
   for i in range(len(notes) - 1):
     n0 = notes[i]
     n1 = notes[i + 1]
-    if n0.end > n1.start:
+    if n0.end > n1.start: # if two sounds same time : this part ensure sorted note status
       monophonic = False
       break
   return monophonic
 
-
+# input = midi file folders, output directory
 def emit_nesmdb_midi_examples(
     midi_fp,
     output_dir,
@@ -53,7 +53,7 @@ def emit_nesmdb_midi_examples(
   if min_num_instruments <= 0:
     raise ValueError()
 
-  # Ignore unusually large MIDI files (only ~25 of these in the dataset)
+  # Ignore unusually large MIDI files (only ~25 of these in the dataset) : unit = byte
   if os.path.getsize(midi_fp) > (512 * 1024): #512K
     return
 
@@ -62,12 +62,12 @@ def emit_nesmdb_midi_examples(
   except:
     return
 
-  # Filter MIDIs with extreme length
+  # Filter MIDIs with extreme length : unit = sec
   midi_len = midi.get_end_time()
   if midi_len < filter_mid_len_below_seconds or midi_len > filter_mid_len_above_seconds:
     return
 
-  # Filter out negative times and quantize to audio samples
+  # Filter out negative times and quantize to audio samples : 값이 거의 똑같은 건데 왜 있는거지
   for ins in midi.instruments:
     for n in ins.notes:
       if filter_mid_bad_times:
@@ -140,13 +140,15 @@ def emit_nesmdb_midi_examples(
   elif num_instruments == 2:
     instrument_perms = [(-1, 0, 1), (-1, 1, 0), (0, -1, 1), (0, 1, -1), (1, -1, 0), (1, 0, -1)]
   elif num_instruments > 32:
+    # 전체 중 32개의 instrument를 랜덤하게 뽑은 후 그 중 3개로 만드는 조합.
     instrument_perms = list(itertools.permutations(random.sample(range(num_instruments), 32), 3))
-  else:
+  else: # for the case of 3 ~ 32
     instrument_perms = list(itertools.permutations(range(num_instruments), 3))
 
   if len(instrument_perms) > output_max_num:
     instrument_perms = random.sample(instrument_perms, output_max_num)
 
+  # add drum or not for each permutation
   num_drums = len(drums) if output_include_drums else 0
   instrument_perms_plus_drums = []
   for perm in instrument_perms:
@@ -154,7 +156,7 @@ def emit_nesmdb_midi_examples(
     instrument_perms_plus_drums.append(perm + (selection,))
   instrument_perms = instrument_perms_plus_drums
 
-  # Emit midi files
+  # Emit midi files for each permutation
   for i, perm in enumerate(instrument_perms):
     # Create MIDI instruments
     p1_prog = pretty_midi.instrument_name_to_program('Lead 1 (square)')
@@ -257,7 +259,7 @@ if __name__ == '__main__':
   import pretty_midi
   from tqdm import tqdm
 
-  midi_fps = glob.glob('./lakh/lmd_full/*/*.mid*')
+  midi_fps = glob.glob('../../lmd_full/*/*.mid*')
   out_dir = './out'
 
   if os.path.isdir(out_dir):
@@ -267,5 +269,6 @@ if __name__ == '__main__':
   def _task(x):
     emit_nesmdb_midi_examples(x, out_dir)
 
+  # 8 process
   with multiprocessing.Pool(8) as p:
     r = list(tqdm(p.imap(_task, midi_fps), total=len(midi_fps)))

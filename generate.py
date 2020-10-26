@@ -10,7 +10,7 @@ if __name__ == '__main__':
   code_utils_dir = os.path.join(code_model_dir, 'utils')
   sys.path.extend([code_model_dir, code_utils_dir])
 
-  from utils import TxlSimpleSampler, load_vocab
+  from utils_ import TxlSimpleSampler, load_vocab
 
   parser = ArgumentParser()
 
